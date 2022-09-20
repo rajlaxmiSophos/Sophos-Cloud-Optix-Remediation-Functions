@@ -16,7 +16,7 @@ import remediation_lambda
 import rds
 import s3
 import boto3
-import s3_malware
+import s3_serverless_storage_protection
 
 """Get all the regions available to be able to remediate the resource in any region."""
 ec2_pre_region = boto3.client('ec2')
@@ -35,4 +35,4 @@ def lambda_handler(event, context):
     remediation_lambda.lambda_handler(event, context, ec2_regions)
     rds.lambda_handler(event, context, ec2_regions)
     s3.lambda_handler(event, context, ec2_regions)
-    s3_malware.lambda_handler(event, context)
+    s3_serverless_storage_protection_handler(event, context)
