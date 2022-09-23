@@ -78,21 +78,35 @@ def move_file_to_remediation_bucket(src_bucket_name, dest_bucket_name, old_key_n
         )
 
 def delete_object_from_bucket(bucket_name, file_name, version):
+     """ This function deletes the malware files from the s3 bucket
+     """
+
     s3_client = boto3.client("s3")
     response = s3_client.delete_object(Bucket=bucket_name, Key=file_name)
 
-    response = client.delete_object(
-        Bucket= bucket_name,
-        Key= file_name,
-        VersionId= version
-    )
+    if(version is None):
+        response = s3_client.delete_object(
+            Bucket= bucket_name,
+            Key= file_name
+        )
+    else:
+        response = s3_client.delete_object(
+            Bucket= bucket_name,
+            Key= file_name,
+            VersionId= version
+        )
 
 
 def lambda_handler(event, context):
     """ Starting function to s3 malware remediation for malware files present in the s3 buckets.
         Check if this function can remediate the event.
         If no, returns
-        If yes, Move every malware file to the common remediation s3 bucket
+        If yes, by default delete every malware file from the s3 bucket
+        In case user want to move the malware file to the quarantine bucket then instead of the
+        delete_object_from_bucket(bucket, file['objectKey'], version) call
+        move_file_to_remediation_bucket(bucket, bucket_name, file['objectKey'] , version) and call
+        the create_bucket(bucket_name) function after it is verified that the alertType of event is of
+        S3 Malware
 
         Args:
             event (dict):
@@ -106,7 +120,9 @@ def lambda_handler(event, context):
             str: Always returns "Remediation successful". Everything else is logged.
     """
     if event['eventType'] == 'ALERT' and event['payloadData']['alertType'] == 'S3 Malware':
-        create_bucket(bucket_name)
+    """ Comment out the below function in case want to move the file to the quarantine bucket
+    """
+#     create_bucket(bucket_name)
         payload_data = event['payloadData']
         affected_resources = payload_data['affectedResources']
         for affected_resource in affected_resources:
@@ -120,7 +136,11 @@ def lambda_handler(event, context):
                         version=None
                         if('version' in file):
                             version=file['version']
-                            delete_object_from_bucket(bucket, file['objectKey'], version)
+                        """    Comment out the below function in case want to move the file to the quarantine bucket
+                        and comment the delete_object_from_bucket function
+                        """
+#                         move_file_to_remediation_bucket(bucket, bucket_name, file['objectKey'] , version)
+                        delete_object_from_bucket(bucket, file['objectKey'], version)
                 except Exception as e:
                     print(e)
 
