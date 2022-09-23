@@ -77,6 +77,16 @@ def move_file_to_remediation_bucket(src_bucket_name, dest_bucket_name, old_key_n
             VersionId=version
         )
 
+def delete_object_from_bucket(bucket_name, file_name, version):
+    s3_client = boto3.client("s3")
+    response = s3_client.delete_object(Bucket=bucket_name, Key=file_name)
+
+    response = client.delete_object(
+        Bucket= bucket_name,
+        Key= file_name,
+        VersionId= version
+    )
+
 
 def lambda_handler(event, context):
     """ Starting function to s3 malware remediation for malware files present in the s3 buckets.
@@ -110,7 +120,7 @@ def lambda_handler(event, context):
                         version=None
                         if('version' in file):
                             version=file['version']
-                        move_file_to_remediation_bucket(bucket, bucket_name, file['objectKey'] , version)
+                            delete_object_from_bucket(bucket, file['objectKey'], version)
                 except Exception as e:
                     print(e)
 
